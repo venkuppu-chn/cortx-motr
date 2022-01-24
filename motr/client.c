@@ -857,7 +857,9 @@ M0_INTERNAL int m0_op_init(struct m0_op *op,
 		time_now = m0_time_now();
 		cinst = m0__entity_instance(entity);
 		op_inflight_tlink_init(op);
+		op->op_mem_id = m0_dummy_id_generate();
 		m0_mutex_lock(&cinst->m0c_inflight_lock);
+		memory_stats(op->op_mem_id);
 		op_inflight_tlist_add(&cinst->m0c_inflight, op);
 		m0_mutex_unlock(&cinst->m0c_inflight_lock);
 		if (m0_time_sub(time_now, cinst->m0c_log_start_time) > m0_time(LOG_OP_INFLIGHT_INTRVL, 0)) {
@@ -897,6 +899,7 @@ void m0_op_fini(struct m0_op *op)
 	m0_sm_group_fini(grp);
 
 	m0_mutex_lock(&cinst->m0c_inflight_lock);
+	memory_stats(op->op_mem_id);
         op_inflight_tlist_del(op);
 	m0_mutex_unlock(&cinst->m0c_inflight_lock);
 

@@ -687,6 +687,7 @@ struct m0_op {
 	struct m0_mutex                op_priv_lock;
 	struct m0_tlink                op_inflight_tlink;
 	uint64_t                       op_inflight_magic;
+	uint64_t                       op_mem_id;
 };
 
 /**

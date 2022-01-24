@@ -140,6 +140,11 @@ M0_INTERNAL size_t m0_allocated(void);
 M0_INTERNAL size_t m0_allocated_total(void);
 
 /**
+ * Print Meory stats
+ */
+M0_INTERNAL void memory_stats(uint64_t id);
+
+/**
  * Returns cumulative amount of memory freed so far since libmotr library
  * loading.
  */

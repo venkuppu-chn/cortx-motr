@@ -102,6 +102,14 @@ static struct m0_atomic64 allocated;
 static struct m0_atomic64 cumulative_alloc;
 static struct m0_atomic64 cumulative_free;
 
+M0_INTERNAL void memory_stats(uint64_t id)
+{
+	M0_LOG(M0_ALWAYS, "id: %"PRIu64", allocated=%"PRIu64" cumulative_alloc=%"PRIu64" "
+	       "cumulative_free=%"PRIu64, id, m0_atomic64_get(&allocated),
+	       m0_atomic64_get(&cumulative_alloc),
+	       m0_atomic64_get(&cumulative_free));
+}
+
 static void alloc_tail(void *area, size_t size)
 {
 	if (DEV_MODE && area != NULL) {
