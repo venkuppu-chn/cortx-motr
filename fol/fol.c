@@ -245,14 +245,14 @@ static size_t fol_record_pack_size(struct m0_fol_rec *rec)
 	len = fol_rec_header_pack_size(h) +
 	      h->rh_frags_nr *
 		m0_xcode_data_size(&ctx, &FRAG_HEADER_XCODE_OBJ(&rph));
-    M0_LOG(M0_WARN, "Line 248: len=%llu\n", (long long unsigned int)len);
+    M0_LOG(M0_WARN, "Before loop Line 248: len=%llu\n", (long long unsigned int)len);
 	m0_tl_for(m0_rec_frag, &rec->fr_frags, frag) {
 		len += m0_xcode_data_size(&ctx, &FRAG_XCODE_OBJ(frag));
-        M0_LOG(M0_WARN, "Line251: len=%llu\n", (long long unsigned int)len);
+        M0_LOG(M0_WARN, "In loop Line251: len=%llu\n", (long long unsigned int)len);
 	} m0_tl_endfor;
-
+    M0_LOG(M0_WARN, "After loop. Before allign. LINE 253: len=%llu\n", (long long unsigned int)len);
 	len = m0_align(len, 8);
-    M0_LOG(M0_WARN, "LINE 255: len=%llu\n", (long long unsigned int)len);
+    M0_LOG(M0_WARN, "After loop. After allign. LINE 255: len=%llu\n", (long long unsigned int)len);
 	if (len >= FOL_REC_MAXSIZE) {
 		M0_LOG(M0_ERROR, "LINE 257: Invalid len=%llu\n", (long long unsigned int)len); 
     }
