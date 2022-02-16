@@ -245,12 +245,17 @@ static size_t fol_record_pack_size(struct m0_fol_rec *rec)
 	len = fol_rec_header_pack_size(h) +
 	      h->rh_frags_nr *
 		m0_xcode_data_size(&ctx, &FRAG_HEADER_XCODE_OBJ(&rph));
-
+    M0_LOG(M0_WARN, "Line 248: len=%llu\n", len);
 	m0_tl_for(m0_rec_frag, &rec->fr_frags, frag) {
 		len += m0_xcode_data_size(&ctx, &FRAG_XCODE_OBJ(frag));
+        M0_LOG(M0_WARN, "Line251: len=%llu\n", len);
 	} m0_tl_endfor;
 
 	len = m0_align(len, 8);
+    M0_LOG(M0_WARN, "LINE 255: len=%llu\n", len);
+	if (len >= FOL_REC_MAXSIZE) {
+		M0_LOG(M0_ERROR, "LINE 257: Invalid len=%llu\n", len); 
+    }
 	M0_POST(len <= FOL_REC_MAXSIZE);
 	return len;
 }
