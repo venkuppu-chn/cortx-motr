@@ -36,8 +36,40 @@ _handle_sigterm() {
    fi
 }
 
-trap _handle_sigterm SIGTERM SIGKILL
+#Move m0trace with time appendend if core exist. Rename core and m0trace with timestamp
+copy_artifacts() {
+    cores=(`find /etc/cortx/ -name 'core\.*' ! -name 'core\.*\.*'`)
+    #echo $cores
+    total=${#cores[*]}
+    echo $total
 
+    for f in "${cores[@]}"
+    do
+        extension="${f##*.}"
+        fname=$(basename $f)
+        #echo "Only core file name. fname:$fname"
+        dname=$(basename $(dirname $f))
+        #echo "Only core dir name. dirname:$dname"
+        trace_file_dir=(`find /etc/cortx/log/motr -name $dname`)
+        #echo "trace_dir=$trace_file_dir"
+        found_trace_file="$trace_file_dir/m0trace.$extension"
+        #echo "trace_file=$found_trace_file"
+        if [[ -f "$found_trace_file" ]]; then
+            echo "Found $found_trace_file"
+            tt=$(date +"%m_%d_%Y_%M:%S")
+            new_found_trace_file=$found_trace_file\.$tt
+            echo "Copying $found_trace_file to $new_found_trace_file"
+            cp $found_trace_file $new_found_trace_file
+            new_core_file=$f\.$tt
+            echo "Copying $f to  $new_core_file"
+            cp $f $new_core_file 
+        fi
+    done
+}
+
+trap _handle_sigterm SIGTERM SIGKILL
+#Move m0trace with time appendend if core exist. Rename core and m0trace with timestamp
+copy_artifacts
 /usr/libexec/cortx-motr/motr-server "$1" &
 PID=$!
 
