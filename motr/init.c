@@ -153,6 +153,7 @@ struct init_fini_call once[] = {
  */
 struct init_fini_call subsystem[] = {
 	{ &m0_memory_init,      &m0_memory_fini,      "memory" },
+	{ &m0_timers_init,      &m0_timers_fini,      "timer" },
 	{ &m0_addb2_module_init, &m0_addb2_module_fini, "addb2" },
 	{ &m0_addb2_global_init, &m0_addb2_global_fini, "addb2-global" },
 	{ &libm0_init,          &libm0_fini,          "libm0" },
@@ -160,7 +161,6 @@ struct init_fini_call subsystem[] = {
 	{ &m0_fid_init,         &m0_fid_fini,         "fid" },
 	{ &m0_file_mod_init,    &m0_file_mod_fini,     "file" },
 	{ &m0_cookie_global_init, &m0_cookie_global_fini, "cookie" },
-	{ &m0_timers_init,      &m0_timers_fini,      "timer" },
 	{ &m0_processors_init,  &m0_processors_fini,  "processors" },
 	/* localities must be initialised after lib/processor.h */
 	{ &m0_localities_init,  &m0_localities_fini,  "locality" },

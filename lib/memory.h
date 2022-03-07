@@ -42,7 +42,8 @@
  * @retval NULL - allocation failed
  * @retval !NULL - allocated memory block
  */
-void *m0_alloc(size_t size);
+void *m0_do_alloc(size_t size, const char * func_name, int line_no, const char * file);
+
 
 /**
  * Allocates memory without explicit zeroing.
@@ -58,7 +59,7 @@ M0_INTERNAL void *m0_alloc_nz(size_t size);
  *
  * @param data pointer to allocated block
  */
-void m0_free(void *data);
+void m0_do_free(void *data, const char * func_name, int line_no, const char * file);
 
 /**
  * Forces page faults for the memory block [addr, addr + size).
@@ -87,6 +88,26 @@ M0_INTERNAL void m0_memory_pagein(void *addr, size_t size);
 
 #define M0_ALLOC_ARR_ALIGNED(arr, nr, shift)		\
 	((arr) = m0_alloc_aligned((nr) * sizeof ((arr)[0]), (shift)))
+
+/* EOS-23152 test */
+#define m0_alloc(size) m0_do_alloc(size, __func__, __LINE__,__FILE__)
+
+#define m0_free(data)  m0_do_free(data, __func__, __LINE__,__FILE__)
+
+#if 0
+
+#define m0_alloc(size) \
+        M0_LOG(M0_ERROR,"%s:%d size=%zi", (char *) __func__, __LINE__, size) \
+	m0_do_alloc(size); 
+
+#define m0_free(data) do { \
+	if (data != NULL) { \
+	size_t size = m0_arch_alloc_size(data) \
+		M0_LOG(M0_ERROR, "%s:%d size=%zi", (char *)__func__, __LINE__, size) \
+	m0_do_free(data); } \
+	} while(0);
+
+#endif
 
 /**
    Allocates zero-filled memory, aligned on (2^shift)-byte boundary.
@@ -138,6 +159,13 @@ M0_INTERNAL size_t m0_allocated(void);
  * loading.
  */
 M0_INTERNAL size_t m0_allocated_total(void);
+
+/**
+ * Print Meory stats
+ */
+M0_INTERNAL void memory_stats(void);
+M0_INTERNAL void print_trace (void);
+
 
 /**
  * Returns cumulative amount of memory freed so far since libmotr library

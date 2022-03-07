@@ -121,6 +121,7 @@ M0_INTERNAL int m0_time_init(void)
 		monotonic = m0_clock_gettime_wrapper(M0_CLOCK_SOURCE_MONOTONIC);
 		realtime  = m0_clock_gettime_wrapper(M0_CLOCK_SOURCE_REALTIME);
 		m0_time_monotonic_offset = realtime - monotonic;
+		M0_LOG(M0_ALWAYS, "YJC: timt init: %"PRIu64, m0_time_monotonic_offset);
 		if (m0_time_monotonic_offset == 0)
 			m0_time_monotonic_offset = 1;
 	}

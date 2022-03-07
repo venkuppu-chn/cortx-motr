@@ -338,14 +338,18 @@ static void layout_op_cb_free(struct m0_op_common *oc)
 {
 	struct m0_op_layout *ol;
 
-	M0_ENTRY();
+	M0_ENTRY("YJC-FREE: calling free %p", &oc->oc_op);
 
 	M0_PRE(oc != NULL);
 	M0_PRE((oc->oc_op.op_size >= sizeof *ol));
 
 	/* By now, fini() has been called and bob_of cannot be used */
-	ol = M0_AMB(ol, oc, ol_oc);
-	m0_free(ol);
+	/* ol = M0_AMB(ol, oc, ol_oc);
+	m0_free(ol); */
+        if (!oc->oc_op.op_pre_allocated) {
+                m0_free(&oc->oc_op);
+        }
+
 
 	M0_LEAVE();
 }

@@ -441,19 +441,20 @@ static void obj_io_cb_fini(struct m0_op_common *oc)
  */
 static void obj_io_cb_free(struct m0_op_common *oc)
 {
-	struct m0_op_obj *oo;
+	/* struct m0_op_obj *oo; */
 	struct m0_op_io  *ioo;
 
-	M0_ENTRY();
+	M0_ENTRY("YJC: freeing op %p", &oc->oc_op);
 
 	M0_PRE(oc != NULL);
 	M0_PRE((oc->oc_op.op_size >= sizeof *ioo));
 
 	/* Can't use bob_of here */
-	oo = M0_AMB(oo, oc, oo_oc);
+	/* oo = M0_AMB(oo, oc, oo_oc);
 	ioo = M0_AMB(ioo, oo, ioo_oo);
 
-	m0_free(ioo);
+	m0_free(ioo); */
+
 
 	M0_LEAVE();
 }
@@ -710,6 +711,11 @@ M0_INTERNAL void m0__obj_op_done(struct m0_op *op)
 	/* Inform its parent. */
 	M0_ASSERT(op->op_parent_ast.sa_cb != NULL);
 	m0_sm_ast_post(parent_oo->oo_sm_grp, &op->op_parent_ast);
+
+        if (parent_oc->oc_op.op_pre_allocated) {
+                m0_free(&parent_oc->oc_op);
+        }
+
 
 	M0_LEAVE();
 }
