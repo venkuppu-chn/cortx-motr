@@ -45,7 +45,7 @@
  * @{
  */
 
-enum { BACKTRACE_DEPTH_MAX = 256 };
+enum { BACKTRACE_DEPTH_MAX = 8 };
 
 M0_EXTERN char *m0_debugger_args[4];
 
@@ -88,7 +88,8 @@ static void arch_backtrace_detailed(void)
 
 void m0_arch_backtrace(void)
 {
-#ifdef HAVE_BACKTRACE
+/* #ifdef HAVE_BACKTRACE */
+#if 1
 	void	   *trace[BACKTRACE_DEPTH_MAX];
 	int	    nr;
 

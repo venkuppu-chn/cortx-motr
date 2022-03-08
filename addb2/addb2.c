@@ -412,6 +412,7 @@ static bool trace_invariant(const struct m0_addb2_trace *tr);
 void m0_addb2_push(uint64_t id, int n, const uint64_t *value)
 {
 	struct m0_addb2_mach *m = mach();
+	return;
 
 	if (m != NULL) {
 		struct tentry         *e;
@@ -440,6 +441,7 @@ void m0_addb2_push(uint64_t id, int n, const uint64_t *value)
 void m0_addb2_pop(uint64_t id)
 {
 	struct m0_addb2_mach *m = mach();
+	return;
 
 	if (m != NULL) {
 		struct tentry          *e = mach_top(m);
@@ -466,6 +468,7 @@ void m0_addb2_pop(uint64_t id)
 void m0_addb2_add(uint64_t id, int n, const uint64_t *value)
 {
 	struct m0_addb2_mach *m = mach();
+	return;
 
 	if (m != NULL) {
 		M0_PRE(n <= ARRAY_SIZE(m->ma_label[0].e_value));
@@ -481,6 +484,7 @@ void m0_addb2_sensor_add(struct m0_addb2_sensor *s, uint64_t id, unsigned nr,
 			 int idx, const struct m0_addb2_sensor_ops *ops)
 {
 	struct m0_addb2_mach *m = mach();
+	return;
 
 	M0_PRE(M0_IS0(s));
 	M0_PRE(nr <= VALUE_MAX_NR);
@@ -504,6 +508,7 @@ void m0_addb2_sensor_add(struct m0_addb2_sensor *s, uint64_t id, unsigned nr,
 void m0_addb2_sensor_del(struct m0_addb2_sensor *s)
 {
 	struct m0_addb2_mach *m = mach();
+	return;
 
 	if (m != NULL) {
 		M0_PRE(!m->ma_stopping);

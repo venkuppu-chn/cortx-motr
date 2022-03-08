@@ -35,16 +35,24 @@
 #include "lib/memory.h"
 #include "lib/finject.h"
 #include "lib/misc.h"   /* m0_round_down */
+#if 0
+#ifdef __GLIBC__
+#include <execinfo.h>
+#endif
+#endif
+
 
 enum { U_POISON_BYTE = 0x5f };
 
 #ifdef ENABLE_DEV_MODE
 #define DEV_MODE (true)
 #else
-#define DEV_MODE (false)
+#define DEV_MODE (true)
 #endif
 
 #ifdef ENABLE_FREE_POISON
+
+
 static void poison_before_free(void *data, size_t size)
 {
 	memset(data, U_POISON_BYTE, size);
@@ -99,8 +107,58 @@ M0_INTERNAL int    m0_arch_memory_init (void);
 M0_INTERNAL void   m0_arch_memory_fini (void);
 
 static struct m0_atomic64 allocated;
+static struct m0_atomic64 allocated_aligned;
 static struct m0_atomic64 cumulative_alloc;
 static struct m0_atomic64 cumulative_free;
+static bool timer_started = false;
+uint64_t start_t;
+bool m0_dev_trace_mem_alloc = false;
+
+#if 0
+#ifdef __GLIBC__
+/* Obtain a backtrace and print it to stdout. */
+M0_INTERNAL void print_trace (void)
+{
+	void *array[1024];
+	char **strings;
+	int size, i;
+
+	size = backtrace (array, 1024);
+	strings = backtrace_symbols (array, size);
+	if (strings != NULL)
+	{
+		M0_LOG(M0_ALWAYS, "Obtained %d stack frames.\n", size);
+		for (i = 0; i < size; i++)
+		M0_LOG(M0_ALWAYS,"%s\n", strings[i]);
+	}
+
+	m0_free(strings);
+}
+#endif
+#endif
+//M0_INTERNAL void memory_stats(uint64_t id,char *file)
+//M0_INTERNAL void memory_stats(uint64_t id)
+M0_INTERNAL void memory_stats(void)
+{
+	if (m0_dev_trace_mem_alloc) {
+		M0_LOG(M0_ALWAYS, "[MEM-STAT] allocated=%"PRIu64" cumulative_alloc=%"PRIu64" "
+	       		"cumulative_free=%"PRIu64 " allocated_aligned %"PRIu64, m0_atomic64_get(&allocated),
+	       		m0_atomic64_get(&cumulative_alloc),
+	       		m0_atomic64_get(&cumulative_free), m0_atomic64_get(&allocated_aligned));
+	}
+#if 0
+	if(file != NULL) {
+		if(!strncmp(file,"motr/client.c",14))
+		#ifdef __GLIBC__
+		print_trace();
+		#endif
+		M0_LOG(M0_ALWAYS, "id: %"PRIu64", allocated=%"PRIu64" cumulative_alloc=%"PRIu64" "
+		       "cumulative_free=%"PRIu64, id, m0_atomic64_get(&allocated),
+		       m0_atomic64_get(&cumulative_alloc),
+		       m0_atomic64_get(&cumulative_free));
+	}
+#endif
+}
 
 static void alloc_tail(void *area, size_t size)
 {
@@ -123,32 +181,57 @@ M0_INTERNAL void *m0_alloc_nz(size_t size)
 	return area;
 }
 
-void *m0_alloc(size_t size)
+void *m0_do_alloc(size_t size, const char *fname, int lno, const char * file)
 {
 	void *area;
 
-	M0_ENTRY("size=%zi", size);
 	if (M0_FI_ENABLED("fail_allocation"))
 		return NULL;
+	if ( timer_started == false && m0_time_monotonic_offset != 0) {
+		start_t = m0_time_now();
+		timer_started = true;
+	}
+
 	area = m0_arch_alloc(size);
 	alloc_tail(area, size);
 	if (area != NULL) {
+		if ((m0_dev_trace_mem_alloc && strcmp(fname, "libfab_buf_register") &&  size > 1000)) {
+			M0_LOG(M0_ALWAYS,"\n fname %s ptr-alloc %p size %zi lno %d file %s", fname, area, size, lno, file);
+			m0_backtrace();
+		}
 		m0_arch_allocated_zero(area, size);
 	} else if (!M0_FI_ENABLED("keep_quiet")) {
 		M0_LOG(M0_ERROR, "Failed to allocate %zi bytes.", size);
 		m0_backtrace();
 	}
-	M0_LEAVE("ptr=%p size=%zi", area, size);
+	if( ( m0_time_monotonic_offset != 0 && (m0_time_now() - start_t) >= M0_TIME_ONE_SECOND * 10ULL)) {
+		memory_stats();
+		timer_started = false;
+		start_t = 0;
+	}
 	return area;
 }
-M0_EXPORTED(m0_alloc);
+M0_EXPORTED(m0_do_alloc);
 
-void m0_free(void *data)
+void m0_do_free(void *data, const char *fname, int lno,const char * file)
 {
+	if ( timer_started == false && m0_time_monotonic_offset != 0) {
+                start_t = m0_time_now();
+                timer_started = true;
+        }
+
 	if (data != NULL) {
 		size_t size = m0_arch_alloc_size(data);
+		if ( 0 && size >= 1024 )
+			m0_backtrace();
+		if( (m0_time_monotonic_offset != 0 && (m0_time_now() - start_t) >= M0_TIME_ONE_SECOND * 10ULL) ) {
+        	        memory_stats();
+                	timer_started = false;
+			start_t = 0;
+	        }
 
-		M0_LOG(M0_DEBUG, "%p", data);
+		if (m0_dev_trace_mem_alloc) 
+			M0_LOG(M0_ALWAYS, "\n fname %s ptr-free %p size %zi lno %d file %s", fname, data, size, lno, file);
 
 		if (DEV_MODE) {
 			m0_atomic64_sub(&allocated, size);
@@ -158,7 +241,7 @@ void m0_free(void *data)
 		m0_arch_free(data);
 	}
 }
-M0_EXPORTED(m0_free);
+M0_EXPORTED(m0_do_free);
 
 M0_INTERNAL void m0_memory_pagein(void *addr, size_t size)
 {
@@ -183,8 +266,11 @@ M0_INTERNAL void *m0_alloc_aligned(size_t size, unsigned shift)
 	alignment = max_type(size_t, 1 << shift, sizeof result);
 	M0_ASSERT(m0_is_po2(alignment));
 	result = m0_arch_alloc_aligned(alignment, size);
-	if (result != NULL)
+	if (result != NULL) {
+		m0_atomic64_add(&allocated_aligned, size);
+		//M0_LOG(M0_ALWAYS, "size = %"PRIu64 " allocated_aligned = %"PRIu64, size, m0_atomic64_get(&allocated_aligned));
 		m0_arch_allocated_zero(result, size);
+	}
 	return result;
 }
 M0_EXPORTED(m0_alloc_aligned);
@@ -195,6 +281,8 @@ M0_INTERNAL void m0_free_aligned(void *data, size_t size, unsigned shift)
 		M0_PRE(m0_addr_is_aligned(data, shift));
 		poison_before_free(data, size);
 		m0_arch_free_aligned(data, size, shift);
+		//M0_LOG(M0_ALWAYS, "FREE size = %"PRIu64 " allocated_aligned = %"PRIu64, size, m0_atomic64_get(&allocated_aligned));
+		m0_atomic64_sub(&allocated_aligned, size);
 	}
 }
 M0_EXPORTED(m0_free_aligned);
@@ -251,13 +339,18 @@ M0_INTERNAL int m0_dont_dump(void *p, size_t size)
 M0_INTERNAL int m0_memory_init(void)
 {
 	m0_atomic64_set(&allocated, 0);
+	m0_atomic64_set(&allocated_aligned, 0);
 	m0_atomic64_set(&cumulative_alloc, 0);
 	m0_atomic64_set(&cumulative_free, 0);
+	M0_LOG(M0_ALWAYS, "memory_init");
+	memory_stats();
 	return m0_arch_memory_init();
 }
 
 M0_INTERNAL void m0_memory_fini(void)
 {
+	M0_LOG(M0_ALWAYS, "memory_fini");
+	memory_stats();
 	M0_LOG(M0_DEBUG, "allocated=%" PRIu64 " cumulative_alloc=%" PRIu64 " "
 	       "cumulative_free=%"PRIu64, m0_atomic64_get(&allocated),
 	       m0_atomic64_get(&cumulative_alloc),
