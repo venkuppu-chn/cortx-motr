@@ -254,6 +254,7 @@ static void idx_op_complete_state_set(struct m0_sm_group *grp,
 	struct m0_op        *op = &oi->oi_oc.oc_op;
 	struct m0_sm_group  *op_grp = &op->op_sm_group;
 	struct m0_sm_group  *en_grp = &op->op_entity->en_sm_group;
+	bool                 op_pre_allocated;
 
 	M0_ENTRY("oi=%p, mask=%" PRIu64, oi, mask);
 
@@ -273,6 +274,7 @@ static void idx_op_complete_state_set(struct m0_sm_group *grp,
 	}
 
 	m0_sm_group_lock(op_grp);
+	op_pre_allocated = op->op_pre_allocated;
 	if ((mask & M0_BITS(M0_OS_EXECUTED)) != 0) {
 		m0_sm_move(&op->op_sm, 0, M0_OS_EXECUTED);
 		m0_op_executed(op);
@@ -286,6 +288,8 @@ static void idx_op_complete_state_set(struct m0_sm_group *grp,
 		}
 	}
 	m0_sm_group_unlock(op_grp);
+	if (0 && !op_pre_allocated)
+		m0_free(op);
 
 	M0_LEAVE();
 }
@@ -416,14 +420,19 @@ static void idx_op_cb_free(struct m0_op_common *oc)
 {
 	struct m0_op_idx *oi;
 
-	M0_ENTRY();
+	M0_ENTRY("IDX-FREE: %p", &oc->oc_op);
 
 	M0_PRE(oc != NULL);
 	M0_PRE((oc->oc_op.op_size >= sizeof *oi));
 
 	/* By now, fini() has been called and bob_of cannot be used */
-	oi = M0_AMB(oi, oc, oi_oc);
-	m0_free(oi);
+	/* oi = M0_AMB(oi, oc, oi_oc);
+	m0_free(oi); */
+        if (!oc->oc_op.op_pre_allocated) {
+		M0_LOG(M0_ALWAYS, "Free pointer %p", &oc->oc_op);
+                m0_free(&oc->oc_op);
+        }
+
 
 	M0_LEAVE();
 }

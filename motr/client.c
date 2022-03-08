@@ -577,6 +577,8 @@ M0_INTERNAL int m0_op_get(struct m0_op **op, size_t size)
 		rc = m0_op_alloc(op, size);
 		if (rc != 0)
 			return M0_ERR(rc);
+		(*op)->op_pre_allocated = false;
+		M0_LOG(M0_ALWAYS, "YJC op is allocated by motr");
 	} else {
 		size_t cached_size = (*op)->op_size;
 
@@ -586,6 +588,7 @@ M0_INTERNAL int m0_op_get(struct m0_op **op, size_t size)
 		/* 0 the pre-allocated operation. */
 		memset(*op, 0, cached_size);
 		(*op)->op_size = size;
+		(*op)->op_pre_allocated = true;
 	}
 	m0_mutex_init(&(*op)->op_pending_tx_lock);
 	spti_tlist_init(&(*op)->op_pending_tx);
@@ -849,13 +852,13 @@ void m0_op_fini(struct m0_op *op)
 	struct m0_op_common        *oc;
 	struct m0_sm_group         *grp;
 
-	M0_ENTRY();
-
 	M0_PRE(op != NULL);
 	M0_PRE(M0_IN(op->op_sm.sm_state, (M0_OS_INITIALISED,
 					  M0_OS_STABLE,
 					  M0_OS_FAILED)));
 	M0_PRE(op->op_size >= sizeof *oc);
+	M0_LOG(M0_ALWAYS, "YJC_FINI: op = %p", op);
+	m0_backtrace();
 
 	oc = bob_of(op, struct m0_op_common, oc_op, &oc_bobtype);
 	if (oc->oc_cb_fini != NULL)

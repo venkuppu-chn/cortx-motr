@@ -257,7 +257,7 @@ M0_INTERNAL uint64_t m0_ha_lq_dequeue(struct m0_ha_lq *lq)
 {
 	struct m0_ha_msg_qitem *qitem;
 	uint64_t                tag;
-
+	M0_ENTRY();
 	M0_PRE(m0_ha_lq_invariant(lq));
 	if (lq->hlq_tags.hlt_confirmed < lq->hlq_tags.hlt_delivered) {
 		qitem = m0_ha_msg_queue_dequeue(&lq->hlq_mq);

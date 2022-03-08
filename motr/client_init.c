@@ -1401,6 +1401,7 @@ static int initlift_addb2(struct m0_sm *mach)
 
 	if (M0_FI_ENABLED("no-addb2"))
 		return M0_RC(initlift_get_next_floor(m0c));
+	return M0_RC(initlift_get_next_floor(m0c));
 
 	if (m0c->m0c_initlift_direction == STARTUP) {
 #ifndef __KERNEL__
@@ -1530,6 +1531,7 @@ M0_INTERNAL int m0_client_global_init(void)
 #define NOT_EMPTY(x) (x != NULL && *x != '\0')
 
 static struct m0 m0_client_motr_instance;
+extern bool m0_dev_trace_mem_alloc;
 int m0_client_init(struct m0_client **m0c_p,
 		   struct m0_config *conf, bool init_m0)
 {
@@ -1565,6 +1567,7 @@ int m0_client_init(struct m0_client **m0c_p,
 	if (m0c == NULL)
 		return M0_ERR(-ENOMEM);
 	m0_client_bob_init(m0c);
+	m0_dev_trace_mem_alloc = 1;
 
 	/* Set configuration parameters */
 	m0c->m0c_config = conf;
@@ -1678,6 +1681,8 @@ int m0_client_init(struct m0_client **m0c_p,
 		m0c->m0c_dtms = m0_dtm0_service_find(&m0c->m0c_reqh);
 		M0_ASSERT(m0c->m0c_dtms != NULL);
 	}
+	M0_LOG(M0_ALWAYS,"[CLIENT] mc_is_addb_init %d",conf->mc_is_addb_init);
+	conf->mc_is_addb_init = 1;
 	if (conf->mc_is_addb_init) {
 		char buf[64];
 		/* Default client addb record file size set to 128M */
