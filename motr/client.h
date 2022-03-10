@@ -683,6 +683,8 @@ struct m0_op {
 	 */
 	void                          *op_priv;
 	struct m0_mutex                op_priv_lock;
+	uint64_t                       op_mem_id;
+	bool                           op_pre_allocated;
 };
 
 /**
