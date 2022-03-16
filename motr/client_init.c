@@ -1568,6 +1568,8 @@ int m0_client_init(struct m0_client **m0c_p,
 		return M0_ERR(-ENOMEM);
 	m0_client_bob_init(m0c);
 	m0_dev_trace_mem_alloc = 1;
+	M0_LOG(M0_ALWAYS, "MEM-DEBUG: enable trace m0_dev_trace_mem_alloc = %d",
+			   m0_dev_trace_mem_alloc);
 
 	/* Set configuration parameters */
 	m0c->m0c_config = conf;
