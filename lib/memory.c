@@ -197,14 +197,14 @@ void *m0_do_alloc(size_t size, const char *fname, int lno, const char * file)
 	if (area != NULL) {
 		if ((m0_dev_trace_mem_alloc && strcmp(fname, "libfab_buf_register") &&  size > 1000)) {
 			M0_LOG(M0_ALWAYS,"\n fname %s ptr-alloc %p size %zi lno %d file %s", fname, area, size, lno, file);
-			m0_backtrace();
+			/* m0_backtrace(); */
 		}
 		m0_arch_allocated_zero(area, size);
 	} else if (!M0_FI_ENABLED("keep_quiet")) {
 		M0_LOG(M0_ERROR, "Failed to allocate %zi bytes.", size);
 		m0_backtrace();
 	}
-	if( ( m0_time_monotonic_offset != 0 && (m0_time_now() - start_t) >= M0_TIME_ONE_SECOND * 10ULL)) {
+	if( ( m0_time_monotonic_offset != 0 && (m0_time_now() - start_t) >= M0_TIME_ONE_SECOND * 60ULL)) {
 		memory_stats();
 		timer_started = false;
 		start_t = 0;
@@ -230,7 +230,7 @@ void m0_do_free(void *data, const char *fname, int lno,const char * file)
 			start_t = 0;
 	        }
 
-		if (m0_dev_trace_mem_alloc) 
+		if (m0_dev_trace_mem_alloc && size > 1000) 
 			M0_LOG(M0_ALWAYS, "\n fname %s ptr-free %p size %zi lno %d file %s", fname, data, size, lno, file);
 
 		if (DEV_MODE) {

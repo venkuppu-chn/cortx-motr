@@ -286,20 +286,16 @@ static void obj_namei_cb_free(struct m0_op_common *oc)
 {
 	struct m0_op_obj *oo;
 
-	M0_ENTRY("YJC-IDX : calling free op %p", &oc->oc_op);
+	M0_ENTRY();
 
 	M0_PRE(oc != NULL);
 	M0_PRE((oc->oc_op.op_size >= sizeof *oo));
 
 	/* By now, fini() has been called and bob_of cannot be used */
-	/* oo = M0_AMB(oo, oc, oo_oc);
+	oo = M0_AMB(oo, oc, oo_oc);
 	M0_PRE(obj_op_obj_invariant(oo));
 
-	m0_free(oo); */
-        if (!oc->oc_op.op_pre_allocated) {
-		M0_LOG(M0_ALWAYS, "YJC : Freeing op %p", &oc->oc_op);
-                m0_free(&oc->oc_op);
-        }
+	m0_free(oo);
 
 	M0_LEAVE();
 }

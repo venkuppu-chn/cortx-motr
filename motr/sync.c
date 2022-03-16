@@ -878,10 +878,7 @@ static void sync_op_cb_free(struct m0_op_common *oc)
 	m0_tl_teardown(sync_target, &os->os_req->sr_targets, tgt)
 		m0_free(tgt);
 	m0_free(os->os_req);
-	/* m0_free(os); */
-        if (!oc->oc_op.op_pre_allocated) {
-                m0_free(&oc->oc_op);
-        }
+	m0_free(os);
 
 	M0_LEAVE();
 }
