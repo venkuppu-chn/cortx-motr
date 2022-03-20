@@ -24,12 +24,16 @@
 #  include "config.h"
 #endif
 
+#define M0_TRACE_SUBSYSTEM M0_TRACE_SUBSYS_UT
+#include "lib/trace.h"
+
 #include "lib/types.h"   /* m0_uint128 */
 #include "lib/string.h"  /* m0_startswith */
 #include "lib/time.h"    /* m0_time_ t */
 #include "lib/memory.h"  /* M0_ALLOC_ARR */
 #include "lib/arith.h"   /* m0_rnd */
 #include "ut/ut.h"       /* M0_UT_ASSERT */
+#include "lib/tracet.h"
 
 #define BM_COMMON_STR "bm-majority-algorithm"
 
@@ -253,6 +257,11 @@ static void test_majority_tie(void)
 	m0_free(kv_arr);
 }
 
+void test_logt(void)
+{
+	M0_LOGT(M0_ALWAYS, "message: ", 0, 1, 2 + 2, true, M0_FID(1, 2));
+}
+
 static void test_majority_get(void)
 {
 	test_majority_ident_arr();
@@ -267,6 +276,7 @@ void m0_test_misc(void)
 	test_str_startswith();
 	test_forall_exists();
 	test_majority_get();
+	test_logt();
 }
 
 /*
