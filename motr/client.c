@@ -521,7 +521,7 @@ M0_INTERNAL int m0_op_stable(struct m0_op *op)
 {
 	struct m0_client *m0c;
 
-	M0_ENTRY();
+	M0_ENTRY("obj_id: "U128X_F, U128_P(&op->op_entity->en_id));
 
 	M0_ASSERT(m0_op_invariant(op));
 
